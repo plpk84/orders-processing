@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    container_name: postgres
+    volumes:
+      - postgres_data:/data
+    environment:
+      POSTGRES_DB: order
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - 5432:5432
+  mongodb:
+    image: mongo:latest
+    container_name: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo_data:/data
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo_express
+    restart: always
+    ports:
+      - 8083:8081
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://root:root@mongo:27017/
+      - ME_CONFIG_BASICAUTH=false
+  redis:
+    image: redis:latest
+    restart: always
+    volumes:
+      - redis_data:/data
+    ports:
+      - 6379:6379
+
+volumes:
+  mongo_data: { }
+  postgres_data: { }
+  redis_data: { }
