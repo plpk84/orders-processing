@@ -1,6 +1,6 @@
 package com.example.order_service.service;
 
-import com.example.order_lib.dto.OrderCreatedEventDto;
+import com.example.order_lib.dto.OrderDto;
 import com.example.order_lib.dto.OrderRequestDto;
 import com.example.order_service.mapper.OrderMapper;
 import com.example.order_service.repository.OrderRepository;
@@ -11,12 +11,11 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.slf4j.MDC;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import static com.example.order_service.model.enums.Status.PROCESSED;
 
@@ -25,24 +24,29 @@ import static com.example.order_service.model.enums.Status.PROCESSED;
 @Slf4j
 public class OrderService {
     private final OrderRepository orderRepository;
-    private final OrderMapper mapper;
-    private final KafkaTemplate<Long, OrderCreatedEventDto> kafkaTemplate;
+    private final OrderMapper orderMapper;
+    private final KafkaTemplate<Long, OrderDto> kafkaTemplate;
 
-    public OrderCreatedEventDto getOrderById(Long id) {
-        return mapper.toDto(orderRepository.findById(id).orElseThrow());
+    @Transactional
+    public OrderDto getOrderById(Long id) {
+        return orderMapper.toDto(orderRepository.findById(id).orElseThrow());
     }
 
     @Transactional
-    public OrderCreatedEventDto saveOrder(OrderRequestDto orderRequestDto) {
-        var order = mapper.toEntity(orderRequestDto);
+    public OrderDto saveOrder(OrderRequestDto orderRequestDto) {
+        var orderMapperEntity = orderMapper.toEntity(orderRequestDto);
+        orderMapperEntity.getItems().forEach(item -> item.setOrder(orderMapperEntity));
+
+        var order = orderRepository.save(orderMapperEntity);
+        log.info(">> Заказ создан id: {}", order.getOrderId());
+
         final var traceId = UUID.randomUUID().toString();
         MDC.put("traceId", traceId);
-        order = orderRepository.save(order);
-        log.info("Заказ создан : {}", order.getOrderId());
-        MDC.remove("traceId");
-        final var orderDto = mapper.toDto(order);
-        CompletableFuture<SendResult<Long, OrderCreatedEventDto>> future = kafkaTemplate.send(
-                new ProducerRecord<Long, OrderCreatedEventDto>(
+        log.debug(">> traceId заказа {} : {}", order.getOrderId(), traceId);
+
+        final var orderDto = orderMapper.toDto(order);
+        kafkaTemplate.send(
+                new ProducerRecord<Long, OrderDto>(
                         "order.created",
                         null,
                         orderDto.orderId(),
@@ -50,16 +54,17 @@ public class OrderService {
                         List.of(new RecordHeader("traceId", traceId.getBytes()))
                 )
         );
-        SendResult<Long, OrderCreatedEventDto> responseDtoSendResult = future.join();
-        log.info("Сообщение отправлено по топику: {}",responseDtoSendResult.getRecordMetadata().topic());
-        log.info("Партиция: {}",responseDtoSendResult.getRecordMetadata().partition());
+        MDC.remove("traceId");
         return orderDto;
     }
 
-    public OrderCreatedEventDto changeStatus(Long id) {
+    @Transactional
+    public OrderDto changeStatus(Long id) {
         var order = orderRepository.findById(id).orElseThrow();
         order.setStatus(PROCESSED);
-        orderRepository.save(order);
-        return mapper.toDto(order);
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.saveAndFlush(order);
+        log.info(">> Статус заказа {} изменен", order.getOrderId());
+        return orderMapper.toDto(order);
     }
 }

@@ -1,6 +1,6 @@
 package com.example.order_service.controller;
 
-import com.example.order_lib.dto.OrderCreatedEventDto;
+import com.example.order_lib.dto.OrderDto;
 import com.example.order_lib.dto.OrderRequestDto;
 import com.example.order_service.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,13 +33,13 @@ public class OrderController {
                             description = "Success",
                             responseCode = "200",
                             content = @Content(
-                                    schema = @Schema(implementation = OrderCreatedEventDto.class)
+                                    schema = @Schema(implementation = OrderDto.class)
                             )
                     )
             }
     )
     @GetMapping("/{id}")
-    public ResponseEntity<OrderCreatedEventDto> getOrder(@PathVariable Long id) {
+    public ResponseEntity<OrderDto> getOrder(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
@@ -50,13 +50,13 @@ public class OrderController {
                             description = "Success",
                             responseCode = "200",
                             content = @Content(
-                                    schema = @Schema(implementation = OrderCreatedEventDto.class)
+                                    schema = @Schema(implementation = OrderDto.class)
                             )
                     )
             }
     )
     @PostMapping()
-    public ResponseEntity<OrderCreatedEventDto> createOrder(@RequestBody OrderRequestDto orderRequestDto) {
+    public ResponseEntity<OrderDto> createOrder(@RequestBody OrderRequestDto orderRequestDto) {
         return ResponseEntity.ok(orderService.saveOrder(orderRequestDto));
     }
 
@@ -67,14 +67,13 @@ public class OrderController {
                             description = "Success",
                             responseCode = "200",
                             content = @Content(
-                                    schema = @Schema(implementation = OrderCreatedEventDto.class)
+                                    schema = @Schema(implementation = OrderDto.class)
                             )
                     )
             }
     )
-
     @PutMapping("/{id}")
-    public ResponseEntity<OrderCreatedEventDto> changeStatus(@PathVariable Long id) {
+    public ResponseEntity<OrderDto> changeStatus(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.changeStatus(id));
     }
 }

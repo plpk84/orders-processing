@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,11 +34,13 @@ public class Order {
     private Long orderId;
     @Column(nullable = false)
     private String customerFullName;
-
-    @OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "order")
     private List<OrderItem> items = new ArrayList<>();
     private String deliveryAddress;
-    @Builder.Default
     @Enumerated(value = EnumType.STRING)
+    @Builder.Default
     private Status status = Status.IN_PROGRESS;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 }

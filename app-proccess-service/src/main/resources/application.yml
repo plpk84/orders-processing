@@ -1,4 +1,12 @@
 spring:
+  data:
+    mongodb:
+      username: root
+      password: root
+      host: localhost
+      port: 27017
+      database: order
+      authentication-database: admin
   application:
     name:
       app-process-service

@@ -1,17 +1,4 @@
 services:
-  postgres:
-    image: 'postgres:latest'
-    restart: always
-    container_name: postgres
-    volumes:
-      - postgres_data:/data
-    environment:
-      POSTGRES_DB: order
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - 5432:5432
-
   kafka1:
     image: bitnami/kafka:latest
     container_name: kafka1
@@ -81,11 +68,12 @@ services:
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - ALLOW_PLAINTEXT_LISTENER=yes
 
+
 volumes:
-  postgres_data:
-  kafka_1_data:
-  kafka_2_data:
-  kafka_3_data:
+  kafka_1_data: { }
+  kafka_2_data: { }
+  kafka_3_data: { }
+
 
 networks:
   kafka-net:
